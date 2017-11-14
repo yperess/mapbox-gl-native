@@ -20,6 +20,11 @@ namespace {
 
     Source* initializeSourcePeer(mbgl::style::Source& coreSource) {
         Source* source;
+        if (coreSource.peer.has_value()) {
+            source = mbgl::util::any_cast<std::unique_ptr<Source>>(&coreSource.peer)->get();
+            return source;
+        }
+
         if (coreSource.is<mbgl::style::VectorSource>()) {
             source = new VectorSource(*coreSource.as<mbgl::style::VectorSource>());
         } else if (coreSource.is<mbgl::style::RasterSource>()) {

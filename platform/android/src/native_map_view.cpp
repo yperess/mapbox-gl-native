@@ -856,12 +856,12 @@ jni::Object<Source> NativeMapView::getSource(JNIEnv& env, jni::String sourceId) 
     return jni::Object<Source>(createJavaSourcePeer(env, *rendererFrontend, *coreSource));
 }
 
-void NativeMapView::addSource(JNIEnv& env, jni::jlong sourcePtr) {
+void NativeMapView::addSource(JNIEnv& env, jni::Object<Source> obj, jlong sourcePtr) {
     assert(sourcePtr != 0);
 
     Source *source = reinterpret_cast<Source *>(sourcePtr);
     try {
-        source->addToMap(*map);
+        source->addToMap(env, obj, *map);
         source->setRendererFrontend(*rendererFrontend);
     } catch (const std::runtime_error& error) {
         jni::ThrowNew(env, jni::FindClass(env, "com/mapbox/mapboxsdk/style/sources/CannotAddSourceException"), error.what());
@@ -877,14 +877,11 @@ jni::Object<Source> NativeMapView::removeSourceById(JNIEnv& env, jni::String id)
     }
 }
 
-void NativeMapView::removeSource(JNIEnv&, jlong sourcePtr) {
+void NativeMapView::removeSource(JNIEnv& env, jni::Object<Source> obj, jlong sourcePtr) {
     assert(sourcePtr != 0);
 
     mbgl::android::Source *source = reinterpret_cast<mbgl::android::Source *>(sourcePtr);
-    std::unique_ptr<mbgl::style::Source> coreSource = map->getStyle().removeSource(source->get().getID());
-    if (coreSource) {
-        source->setSource(std::move(coreSource));
-    }
+    source->removeFromMap(env, obj, *map);
 }
 
 void NativeMapView::addImage(JNIEnv& env, jni::String name, jni::jint w, jni::jint h, jni::jfloat scale, jni::Array<jbyte> pixels) {
